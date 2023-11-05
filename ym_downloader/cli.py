@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser(
     description='Download music from yandex music',
     epilog='Text at the bottom of help')
 
-parser.add_argument('urls', metavar='album_id1, album_id2, album_id3',
+parser.add_argument('urls', metavar='url1 url2 url3',
                     type=str, nargs='+',
                     help='yandex music album id')
 
@@ -50,14 +50,12 @@ parser.add_argument('-files_bitrate', '-bit', metavar='folder for tracks',
 def run():
     args = parser.parse_args()
     logger.info(args)
+
     playlists = [url_to_playlist(url) for url in args.urls]
+
     for playlist in playlists:
-        AlbumDownloader(playlist).download_tracks()
-    # user_liked_tracks = client.users_playlists(3, 'taruumax')
-    # for track in user_liked_tracks.fetch_tracks():
-    #     logger.info(track)
-    #     track_obj = track.fetch_track()
-    #     logger.info(track_obj.get_download_info())
+        AlbumDownloader(playlist,
+                        os.path.abspath(args.out_path)).download_tracks()
 
 
 sys.exit(run())

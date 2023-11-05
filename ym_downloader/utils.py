@@ -1,6 +1,8 @@
 import os
+import music_tag
 import time
 from typing import Union
+from urllib.parse import urlparse
 
 import yandex_music
 from loguru import logger
@@ -14,22 +16,19 @@ from config.loader import client
 
 
 def url_to_playlist(url_text: str) -> Playlist:
-    link = urlparse(url_text)
-
-    if link.netloc != 'music.yandex.ru':
+    path_url = urlparse(url_text)
+    if path_url.netloc != 'music.yandex.ru':
         return None
-    path = link.path.split('/')
+    path = path_url.path.split('/')
     path.pop(0)
+    print('path', path)
 
-    print(path)
     if 'album' in path:
         album_id = int(path[-1])
         return client.albums_with_tracks(album_id)
     elif 'users' in path:
         album_id = int(path[-1])
         user = path[1]
-        print(path)
-        print(album_id, user)
         return client.users_playlists(album_id, user)
     else:
         ValueError("not correct url")
@@ -42,7 +41,6 @@ class AlbumDownloader:
         self.bit_rate = bit_rate
         self.out_folder = out_folder
 
-        print(type(playlist))
         if playlist.__class__ is Album:
 
             album = playlist.with_tracks()
@@ -50,26 +48,27 @@ class AlbumDownloader:
 
             if self.out_folder is None:
                 self.out_folder = album.id
-        else:
+        elif playlist.__class__ is Playlist:
             self.tracks = playlist.fetch_tracks()
             if self.out_folder is None:
                 self.out_folder = playlist.playlist_id
+
         self.cwd = os.getcwd()
         self.codec = codec
 
     def download_tracks(self):
-        print(self.out_folder)
-        folder_path = f"{self.cwd}/{self.out_folder}/"
-        if not os.path.exists(folder_path):
-            os.mkdir(folder_path)
+
         for track_short in self.tracks:
             self.download_track(track_short)
-            pass
 
     def download_track(self, track: Union[TrackShort, Track]):
-        path_file = f"{self.cwd}/{self.out_folder}/{track.track_id}.{self.codec}"
-        print('type ', type(track))
+        path_file = f"{self.out_folder}/{track.track_id}.{self.codec}"
+
+        if os.path.exists(path_file):
+            logger.info(f"track already exists {track.track_id}")
+            return
         logger.info(f"download track {track.track_id}")
+
         while not os.path.isfile(path_file):
             while track.__class__ is TrackShort:
                 try:
@@ -79,13 +78,23 @@ class AlbumDownloader:
                     time.sleep(5)
             try:
                 track.download(path_file, self.codec, self.bit_rate)
+                self.write_metadata(path_file, track)
+
             except Exception as e:
                 if e.__class__ is UnauthorizedError:
                     break
                 logger.error(e)
                 time.sleep(5)
 
-        pass
+    @staticmethod
+    def write_metadata(path, track):
+        cover_bytes = track.download_cover_bytes(size='200x200')
+        music_file = music_tag.load_file(path)
 
-    def write_metadata(self):
-        pass
+        music_file.append_tag('artwork', cover_bytes)
+        music_file.append_tag('title', track.title)
+
+        for artist_data in track.artists:
+            music_file.append_tag('artist', artist_data['name'])
+
+        music_file.save()
