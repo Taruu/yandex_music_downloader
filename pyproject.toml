@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "yandex-music-downloader"
+version = "0.1.0"
+description = ""
+authors = ["Taruu <markov2002@bk.ru>"]
+readme = "README.md"
+
+
+[tool.poetry.dependencies]
+python = "^3.11"
+yandex-music = "^2.1.1"
+music-tag = "^0.4.3"
+loguru = "^0.7.1"
+dynaconf = "^3.2.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

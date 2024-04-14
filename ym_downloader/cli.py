@@ -1,12 +1,9 @@
 import argparse
-import asyncio
 import os.path
 import sys
-from utils import url_to_playlist, AlbumDownloader
-from yandex_music import Client
+from pathlib import Path
 
-from config.loader import settings
-from signal import SIGINT, SIGTERM
+from utils import url_to_playlist, AlbumDownloader
 
 from loguru import logger
 
@@ -48,6 +45,8 @@ parser.add_argument('-files_bitrate', '-bit', metavar='folder for tracks',
 
 
 def run():
+    os.chdir(Path(os.getcwd()))
+    print("pathCWD", os.getcwd())
     args = parser.parse_args()
     logger.info(args)
 

@@ -2,9 +2,7 @@ import os
 import music_tag
 import time
 from typing import Union
-from urllib.parse import urlparse
 
-import yandex_music
 from loguru import logger
 from yandex_music.exceptions import UnauthorizedError
 from yandex_music.track.track import Track
@@ -53,7 +51,6 @@ class AlbumDownloader:
             if self.out_folder is None:
                 self.out_folder = playlist.playlist_id
 
-        self.cwd = os.getcwd()
         self.codec = codec
 
     def download_tracks(self):
